@@ -1,0 +1,55 @@
+services:
+  python:
+    build:
+      context: .
+    container_name: "python-app"
+    ports:
+      - "8000:8000"
+    env_file:
+      - ".env"
+    networks:
+      - network-app
+    restart: always
+    depends_on:
+      - db
+
+
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: "nginx_proxy"
+    ports:
+      - "80:80"
+    depends_on:
+      - python
+    restart: always
+    networks:
+      - network-app
+
+  db:
+    image: mysql
+    container_name: resturant_db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    networks:
+      - network-app
+    healthcheck:
+      test: ["CMD" , "mysqladmin" , "ping" ,"-h", "localhost","-uroot","-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+volumes:
+  mysql_data:
+
+networks:
+  network-app:
+
+      
