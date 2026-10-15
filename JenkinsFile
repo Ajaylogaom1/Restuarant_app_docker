@@ -1,0 +1,41 @@
+pipeline {
+    agent { label "agent_jenkin" }
+
+    stages {
+        stage('code') {
+            steps {
+                echo 'to clone the project'
+                git url: "https://github.com/Ajaylogaom1/Restuarant_app_docker.git" , branch: "main"
+            }
+        }
+        stage('build') {
+            steps {
+                echo 'to build the project using docker'
+                sh "docker build -t restuarant_app:latest ."
+                echo "docker image built sucessfully"
+            }
+        }
+        stage('push code in dockerhub') {
+            steps {
+                echo 'pushing code in dockerhub'
+                withCredentials([
+                      usernamePassword(
+                          credentialsId: 'jenkinscred',
+                          usernameVariable: 'DOCKER_USER',
+                          passwordVariable: 'DOCKER_PASS'
+                         )
+               ]) {
+                sh "docker login -u ${env.DOCKER_USER} -p ${env.DOCKER_PASS}"
+                sh "docker image tag  restuarant_app:latest ${env.DOCKER_USER}/restuarant_app:latest"
+                sh "docker push ${env.DOCKER_USER}/restuarant_app:latest"
+               }
+            }
+        }
+        stage('deploy'){
+            steps {
+                echo "to deploy the project"
+                sh "docker compose up -d"
+            }
+        }
+    }
+}
